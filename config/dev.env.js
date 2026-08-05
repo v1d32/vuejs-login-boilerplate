@@ -8,5 +8,5 @@ module.exports = merge(prodEnv, {
   // itself, which forwards to the API via dev.proxyTable (config/index.js).
   // Staying same-origin avoids a CORS preflight against coresys.local.
   // To call the API directly instead, set '"http://coresys.local"' here.
-  //API_BASE: '""'
+  API_BASE: '"http://coresys.local"'
 })
