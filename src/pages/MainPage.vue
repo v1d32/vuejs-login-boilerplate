@@ -97,7 +97,7 @@ export default {
     },
     beforeMount() {
         // TODO: implements server authentication
-        let currentBearerUser = localStorage.getItem('bearerauth')
+        let currentBearerUser = localStorage.getItem('bearerauth') || sessionStorage.getItem('bearerauth')
         if (currentBearerUser) {
             this.$router.replace({ name: 'main' })
         } else {

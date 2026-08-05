@@ -44,7 +44,14 @@ module.exports = {
     // Proxy your API if using any.
     // Also see /build/script.dev.js and search for "proxy api requests"
     // https://github.com/chimurai/http-proxy-middleware
-    proxyTable: {}
+    proxyTable: {
+      // Forward API calls to the backend so the browser stays same-origin.
+      // Pairs with API_BASE: '""' in config/dev.env.js
+      '/v1': {
+        target: 'http://coresys.local',
+        changeOrigin: true
+      }
+    }
   }
 }
 

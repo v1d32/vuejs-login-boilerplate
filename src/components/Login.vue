@@ -16,7 +16,7 @@
 
                 <q-card-actions class="row justify-end">
                     <q-toggle color="cyan" v-model="remember_password" label="Remember Password" />
-                    <q-btn color="cyan" big icon="assignment_ind" @click="onLogin()" class="login-button">
+                    <q-btn color="cyan" big icon="assignment_ind" @click="onLogin" class="login-button">
                         login
                     </q-btn>
                 </q-card-actions>
@@ -62,26 +62,77 @@ export default {
         Toast
     },
     methods: {
-        onLogin() {
-            // TODO: Remove and implements server authentication
-            let compareUserBase64 = this.$utils.encode.toBase64('admin@123')
-            if (this.login.length > 0 && this.password.length > 0) {
-                let userBase64 = this.$utils.encode.toBase64(`${this.login}@${this.password}`)
-                if (compareUserBase64 === userBase64) {
-                    if (this.remember_password) {
-                        localStorage.setItem('bearerauth', userBase64)
-                    } else {
-                        localStorage.removeItem('bearerauth')
-                    }
+        async onLogin(event, done) {
+            // QBtn runs in loader mode by default and stays disabled until it
+            // is handed back the `done` callback it emits alongside the click.
+            let stopLoader = typeof done === 'function' ? done : () => {}
 
-                    let payload = { login: this.login, password: this.password, name: 'admin', role: 'admin' }
-                    // call without action because checkIn dont needs asyncronous
-                    this.checkIn(payload)
-                    this.$router.replace({ name: 'main' })
-                } else {
-                    Toast.create.negative({ html: 'Usuário ou Senha Inválidos' })
-                }
+            let username = this.login.trim()
+            let password = this.password
+
+            if (username.length === 0 || password.length === 0) {
+                Toast.create.warning({ html: 'Login dan Password wajib diisi' })
+                stopLoader()
+                return
             }
+
+            try {
+                let response = await fetch(`${process.env.API_BASE}/v1/oauth/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        grant_type: 'password',
+                        client_id: process.env.OAUTH_CLIENT_ID,
+                        client_secret: process.env.OAUTH_CLIENT_SECRET,
+                        username: username,
+                        password: password,
+                        scope: ''
+                    })
+                })
+
+                // An error body is not guaranteed to be JSON, so tolerate a parse failure.
+                let body = await response.json().catch(() => ({}))
+                let data = body.data || {}
+
+                // This API answers 200 even for a rejected login and reports the
+                // real outcome in `success`, so the HTTP status alone is not enough.
+                if (!response.ok || body.success !== true || !data.access_token) {
+                    Toast.create.negative({ html: this.authErrorMessage(body, response.status) })
+                    return
+                }
+
+                this.storeToken(data)
+                // call without action because checkIn dont needs asyncronous
+                this.checkIn({ login: username, name: username, rule: '' })
+                this.$router.replace({ name: 'main' })
+            } catch (err) {
+                Toast.create.negative({ html: `Tidak dapat menghubungi server: ${err.message}` })
+            } finally {
+                stopLoader()
+            }
+        },
+        storeToken(data) {
+            // Only localStorage survives a browser restart, but sessionStorage
+            // still satisfies the guard in MainPage for the current tab.
+            let target = this.remember_password ? localStorage : sessionStorage
+            let other = this.remember_password ? sessionStorage : localStorage
+
+            other.removeItem('bearerauth')
+            other.removeItem('refreshtoken')
+            target.setItem('bearerauth', data.access_token)
+            if (data.refresh_token) {
+                target.setItem('refreshtoken', data.refresh_token)
+            }
+        },
+        authErrorMessage(body, status) {
+            // The API sends a human-readable reason, e.g. "Email not Found."
+            if (body.message) {
+                return body.message
+            }
+            if (status === 400 || status === 401) {
+                return 'Login atau Password salah'
+            }
+            return `Login gagal (HTTP ${status})`
         },
         ...mapMutations({
             checkIn: `login/${LOGIN.CHECK_IN}` // map this.checkIn()` to `this.$store.commit(`login/${LOGIN.CHECK_IN}`, payload)`
