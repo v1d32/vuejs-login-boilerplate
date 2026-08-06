@@ -32,6 +32,11 @@ export default new VueRouter({
           name: 'profile',
           path: '/profile',
           component: load('Profile')
+        },
+        {
+          name: 'myAccount',
+          path: '/my-account',
+          component: load('MyAccount')
         }
         ]
     },

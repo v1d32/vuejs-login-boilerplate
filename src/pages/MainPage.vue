@@ -16,7 +16,7 @@
                 <q-item @click="onNavigate('profile')">
                   <q-item-main label="Profile" />
                 </q-item>
-                <q-item @click="$refs.popover2.close()">
+                <q-item @click="onNavigate('myAccount')">
                   <q-item-main label="My Accoun" />
                 </q-item>
                 <q-item @click="onLogout">
