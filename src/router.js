@@ -27,7 +27,13 @@ export default new VueRouter({
           name: 'main2',
           path: '/main2',
           component: load('Main2')
-        }]
+        },
+        {
+          name: 'profile',
+          path: '/profile',
+          component: load('Profile')
+        }
+        ]
     },
     { path: '/login', name: 'login', component: loadPages('LoginPage') },
     // Always leave this last one
