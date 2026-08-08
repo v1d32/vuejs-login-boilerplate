@@ -1,6 +1,6 @@
 <template>
     <q-layout ref="layout" view="lHh Lpr fff" :left-class="{'bg-grey-2': true}">
-      <template #header>
+      <template>
         <q-toolbar class="glossy">
           <q-btn flat @click="$refs.layout.toggleLeft()">
             <q-icon name="menu" />
